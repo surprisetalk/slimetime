@@ -1,0 +1,269 @@
+var _user$project$Map$view = F5(
+	function (team, time, _p1, _p0, map) {
+		var _p2 = _p1;
+		var _p25 = _p2.width;
+		var _p24 = _p2.height;
+		var _p3 = _p0;
+		var _p23 = _p3.zoom;
+		var _p22 = _p3.loc;
+		var borderStyle = _elm_lang$core$Native_Utils.update(
+			_evancz$elm_graphics$Collage$defaultLine,
+			{color: _elm_lang$core$Color$lightCharcoal, width: 1});
+		var hue = function () {
+			var _p4 = team;
+			switch (_p4.ctor) {
+				case 'Squid':
+					return _elm_lang$core$Basics$degrees(200);
+				case 'Toad':
+					return _elm_lang$core$Basics$degrees(0);
+				default:
+					return _elm_lang$core$Basics$degrees(140);
+			}
+		}();
+		var snipAtJumps = function (l) {
+			return A4(
+				_user$project$Helper$fl,
+				_elm_lang$core$List$foldr,
+				{
+					ctor: '::',
+					_0: {ctor: '[]'},
+					_1: {ctor: '[]'}
+				},
+				F2(
+					function (_p5, l_) {
+						var _p6 = _p5;
+						var _p8 = _p6._0._1;
+						var _p7 = _p6._0._0;
+						return ((_elm_lang$core$Native_Utils.cmp(_p7 * _p6._1._0, 0) > 0) && (_elm_lang$core$Native_Utils.cmp(_p8 * _p6._1._1, 0) > 0)) ? A2(
+							_user$project$Helper$mapFirst,
+							F2(
+								function (x, y) {
+									return {ctor: '::', _0: x, _1: y};
+								})(
+								{ctor: '_Tuple2', _0: _p7, _1: _p8}),
+							l_) : A2(
+							F2(
+								function (x, y) {
+									return {ctor: '::', _0: x, _1: y};
+								}),
+							{
+								ctor: '::',
+								_0: {ctor: '_Tuple2', _0: _p7, _1: _p8},
+								_1: {ctor: '[]'}
+							},
+							l_);
+					}),
+				A2(
+					_elm_community$list_extra$List_Extra$zip,
+					l,
+					A2(_user$project$Helper$cycle, 1, l)));
+		};
+		var coordToPoint = function (_p9) {
+			var _p10 = _p9;
+			return {ctor: '_Tuple2', _0: _p10.x, _1: _p10.y};
+		};
+		var h = _elm_lang$core$Basics$toFloat(_p24);
+		var w = _elm_lang$core$Basics$toFloat(_p25);
+		var m = A2(_elm_lang$core$Basics$max, w, h);
+		var mapProjection = F2(
+			function (_p12, _p11) {
+				var _p13 = _p12;
+				var _p18 = _p13._1;
+				var _p17 = _p13._0;
+				var _p14 = _p11;
+				var _p16 = _p14._1;
+				var _p15 = _p14._0;
+				return (_elm_lang$core$Native_Utils.cmp(
+					0,
+					(_elm_lang$core$Basics$sin(_p18) * _elm_lang$core$Basics$sin(_p16)) + ((_elm_lang$core$Basics$cos(_p18) * _elm_lang$core$Basics$cos(_p16)) * _elm_lang$core$Basics$cos(_p15 - _p17))) < 1) ? _elm_lang$core$Maybe$Just(
+					{
+						ctor: '_Tuple2',
+						_0: ((_elm_lang$core$Basics$cos(_p16) * _elm_lang$core$Basics$sin(_p15 - _p17)) * m) * _p23,
+						_1: (((_elm_lang$core$Basics$cos(_p18) * _elm_lang$core$Basics$sin(_p16)) - ((_elm_lang$core$Basics$sin(_p18) * _elm_lang$core$Basics$cos(_p16)) * _elm_lang$core$Basics$cos(_p15 - _p17))) * m) * _p23
+					}) : _elm_lang$core$Maybe$Nothing;
+			});
+		var formBorder = function (_p19) {
+			return A2(
+				_evancz$elm_graphics$Collage$traced,
+				borderStyle,
+				_evancz$elm_graphics$Collage$path(
+					_user$project$Helper$mResolveList(
+						A2(
+							_elm_lang$core$List$map,
+							mapProjection(_p22),
+							A2(_elm_lang$core$List$map, coordToPoint, _p19)))));
+		};
+		var formMap = _evancz$elm_graphics$Collage$group(
+			A2(_elm_lang$core$List$map, formBorder, map));
+		var geoToScreen_ = F3(
+			function (rng, geo_, loc_) {
+				return ((((A2(
+					_user$project$Helper_ops['%%'],
+					geo_ - loc_,
+					_elm_lang$core$Basics$floor(rng * 2)) - rng) / rng) * m) / 2) * _p23;
+			});
+		var geoToScreen = function (_p20) {
+			var _p21 = _p20;
+			return {
+				x: A3(
+					geoToScreen_,
+					180,
+					_p21.x,
+					_elm_lang$core$Tuple$first(_p22)),
+				y: A3(
+					geoToScreen_,
+					90,
+					_p21.y,
+					_elm_lang$core$Tuple$second(_p22))
+			};
+		};
+		var t = A2(
+			_user$project$Helper_ops['%%'],
+			_elm_lang$core$Time$inHours(time),
+			24);
+		var formBackground = A2(
+			_evancz$elm_graphics$Collage$filled,
+			A3(
+				_elm_lang$core$Color$hsl,
+				hue,
+				A2(
+					F2(
+						function (x, y) {
+							return x + y;
+						}),
+					0.4,
+					A3(
+						_user$project$Helper$fl,
+						F2(
+							function (x, y) {
+								return x / y;
+							}),
+						15,
+						_elm_lang$core$Basics$cos(
+							A2(
+								F2(
+									function (x, y) {
+										return x * y;
+									}),
+								2,
+								_elm_lang$core$Tuple$second(_p22))))),
+				A2(
+					F2(
+						function (x, y) {
+							return x + y;
+						}),
+					0.2,
+					A3(
+						_user$project$Helper$fl,
+						F2(
+							function (x, y) {
+								return x / y;
+							}),
+						10,
+						_elm_lang$core$Basics$cos(
+							A2(
+								F2(
+									function (x, y) {
+										return x + y;
+									}),
+								_elm_lang$core$Basics$pi,
+								A2(
+									F2(
+										function (x, y) {
+											return x + y;
+										}),
+									(t / 12) * _elm_lang$core$Basics$pi,
+									_elm_lang$core$Tuple$first(_p22))))))),
+			A2(_evancz$elm_graphics$Collage$rect, w, h));
+		return _evancz$elm_graphics$Element$toHtml(
+			A3(
+				_evancz$elm_graphics$Collage$collage,
+				_p25,
+				_p24,
+				{
+					ctor: '::',
+					_0: formBackground,
+					_1: {
+						ctor: '::',
+						_0: formMap,
+						_1: {ctor: '[]'}
+					}
+				}));
+	});
+var _user$project$Map$Persp = F2(
+	function (a, b) {
+		return {loc: a, zoom: b};
+	});
+var _user$project$Map$Coord = F2(
+	function (a, b) {
+		return {x: a, y: b};
+	});
+var _user$project$Map$geoListToCoord = function (lst) {
+	var _p26 = lst;
+	if (((_p26.ctor === '::') && (_p26._1.ctor === '::')) && (_p26._1._1.ctor === '[]')) {
+		return _elm_lang$core$Result$Ok(
+			A2(
+				_user$project$Map$Coord,
+				_elm_lang$core$Basics$degrees(_p26._0),
+				_elm_lang$core$Basics$degrees(_p26._1._0)));
+	} else {
+		return _elm_lang$core$Result$Err(
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				'could not parse list ',
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					_elm_lang$core$Basics$toString(lst),
+					' into tuple')));
+	}
+};
+var _user$project$Map$coordinatesDecoder_ = A2(
+	_elm_lang$core$Json_Decode$map,
+	function (_p27) {
+		return A2(
+			_elm_lang$core$Result$withDefault,
+			{ctor: '[]'},
+			_elm_community$result_extra$Result_Extra$combine(
+				_elm_lang$core$List$concat(_p27)));
+	},
+	_elm_lang$core$Json_Decode$list(
+		_elm_lang$core$Json_Decode$list(
+			A2(
+				_elm_lang$core$Json_Decode$map,
+				_user$project$Map$geoListToCoord,
+				_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$float)))));
+var _user$project$Map$coordinatesDecoder = function (shapeType) {
+	return A2(
+		_elm_lang$core$Json_Decode$field,
+		'coordinates',
+		function () {
+			var _p28 = shapeType;
+			switch (_p28) {
+				case 'Polygon':
+					return A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$List$singleton, _user$project$Map$coordinatesDecoder_);
+				case 'MultiPolygon':
+					return _elm_lang$core$Json_Decode$list(_user$project$Map$coordinatesDecoder_);
+				default:
+					return _elm_lang$core$Json_Decode$fail(
+						A2(_elm_lang$core$Basics_ops['++'], 'bad shape: ', shapeType));
+			}
+		}());
+};
+var _user$project$Map$featureDecoder = A2(
+	_elm_lang$core$Json_Decode$field,
+	'geometry',
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		_user$project$Map$coordinatesDecoder,
+		A2(_elm_lang$core$Json_Decode$field, 'type', _elm_lang$core$Json_Decode$string)));
+var _user$project$Map$cartographyDecoder = A2(
+	_elm_lang$core$Json_Decode$field,
+	'features',
+	A2(
+		_elm_lang$core$Json_Decode$map,
+		_elm_lang$core$List$concat,
+		_elm_lang$core$Json_Decode$list(_user$project$Map$featureDecoder)));
+var _user$project$Map$decode = _elm_lang$core$Json_Decode$decodeValue(_user$project$Map$cartographyDecoder);
+var _user$project$Map$Duck = {ctor: 'Duck'};
+var _user$project$Map$Toad = {ctor: 'Toad'};
+var _user$project$Map$Squid = {ctor: 'Squid'};
