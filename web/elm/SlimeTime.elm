@@ -7,7 +7,8 @@ import Map exposing (..)
 
 import Result.Extra as Result_
 
-import Json.Decode exposing (..)
+import Json.Decode as JD exposing (..)
+import Json.Encode as JE exposing (..)
 import Html exposing (..)
 import Time exposing (..)
 import Task
@@ -20,10 +21,14 @@ import Helper exposing (..)
 import Animation exposing (..)
 import AnimationFrame exposing (..)
 
+import Phoenix.Socket
+import Phoenix.Channel
+import Phoenix.Push
+
 
 -- PORTS -----------------------------------------------------------------------
 
-port cartography : (Value -> msg) -> Sub msg
+port cartography : (JE.Value -> msg) -> Sub msg
 
 
 -- MAIN ------------------------------------------------------------------------
@@ -47,6 +52,7 @@ type alias Model
     , persp  : Persp
     , time   : Time
     , team   : Team
+    , phx    : Phoenix.Socket.Socket Msg
     -- user
     }
 
@@ -67,6 +73,9 @@ init
     , persp  = { loc = ( anim, anim ), zoom = anim }
     , team   = Toad
     , time   = 0
+    , phx    = Phoenix.Socket.init "ws://localhost:4000/socket/websocket"
+               |> Phoenix.Socket.withDebug
+               |> Phoenix.Socket.on   "shout" "lobby" MissileShow
     } ! [ Task.perform ScreenResize Window.size
         , Task.perform TimeUpdate      Time.now ]
 
@@ -109,10 +118,12 @@ setPersp persp_ model = { model | persp = persp_ }
 type Msg
   = NoOp
   | MapUpdate (Result String Map)
-  | MouseMsg Mouse.Position
   | KeyMsg Keyboard.KeyCode
   | ScreenResize Window.Size
   | TimeUpdate Time
+  | PhoenixMsg (Phoenix.Socket.Msg Msg)
+  | MissileShow JE.Value
+  | MissileSend Mouse.Position
 
 
 -- UPDATE ----------------------------------------------------------------------
@@ -135,11 +146,16 @@ update msg model
               _  -> identity
     in  case msg of
           NoOp              ->   model                   ! []
-          MouseMsg     pos  ->   model                   ! []
           KeyMsg       code -> ( model |> keyPersp code ) ! []
           MapUpdate    map_ -> { model | map    = map_ } ! []
           TimeUpdate     t_ -> { model | time   =   t_ } ! []
           ScreenResize size -> { model | screen = size } ! []
+          MissileShow   val ->   model                   ! []
+          MissileSend {x,y} ->   model                   ! []
+          PhoenixMsg   msg_ -> let ( phxSocket, phxCmd ) = Phoenix.Socket.update msg_ model.phx
+                              in  ( { model | phx = phxSocket }
+                                  , Cmd.map PhoenixMsg phxCmd
+                                  )
 
 
 -- SUBSCRIPTIONS ---------------------------------------------------------------
@@ -148,11 +164,12 @@ update msg model
 subscriptions : Model -> Sub Msg
 subscriptions model
   = Sub.batch
-        [ Mouse.clicks MouseMsg
+        [ Mouse.clicks MissileSend
         , Keyboard.downs KeyMsg
         , cartography (Map.decode >> MapUpdate)
         , Window.resizes ScreenResize
         , AnimationFrame.times TimeUpdate
+        , Phoenix.Socket.listen model.phx PhoenixMsg
         -- , Time.every (Time.second    ) (\_ -> KeyMsg 38)
         -- , Time.every (Time.second / 2) (\_ -> KeyMsg 37)
         ]
